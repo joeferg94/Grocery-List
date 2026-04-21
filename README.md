@@ -1,2 +1,566 @@
 # Grocery-List
 Collect sort and list grocery list from muliple users.
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Household Grocery List</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #dbe3ee;
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+      --danger: #dc2626;
+      --success: #16a34a;
+      --shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+      --radius: 16px;
+    }* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.app {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.hero {
+  background: linear-gradient(135deg, #1d4ed8, #2563eb, #60a5fa);
+  color: white;
+  padding: 24px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  margin-bottom: 24px;
+}
+
+.hero h1 {
+  margin: 0 0 8px;
+  font-size: 2rem;
+}
+
+.hero p {
+  margin: 0;
+  opacity: 0.95;
+  line-height: 1.5;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.card {
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 20px;
+  border: 1px solid var(--border);
+}
+
+.card h2 {
+  margin-top: 0;
+  margin-bottom: 16px;
+  font-size: 1.25rem;
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.controls.full {
+  grid-template-columns: 1fr;
+}
+
+label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: bold;
+  margin-bottom: 6px;
+}
+
+input, select, button {
+  width: 100%;
+  padding: 11px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  font-size: 0.95rem;
+}
+
+input:focus, select:focus {
+  outline: 2px solid rgba(37, 99, 235, 0.2);
+  border-color: var(--accent);
+}
+
+button {
+  border: none;
+  background: var(--accent);
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+button:hover { background: var(--accent-hover); }
+
+button.secondary {
+  background: #e5e7eb;
+  color: var(--text);
+}
+
+button.secondary:hover {
+  background: #d1d5db;
+}
+
+button.danger {
+  background: var(--danger);
+}
+
+button.danger:hover {
+  background: #b91c1c;
+}
+
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.button-row button {
+  width: auto;
+  min-width: 140px;
+  padding: 11px 16px;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+  max-height: 450px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #fafcff;
+}
+
+.item-left {
+  min-width: 0;
+}
+
+.item-name {
+  font-weight: bold;
+  margin-bottom: 4px;
+  text-transform: capitalize;
+}
+
+.item-meta {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.category-block {
+  margin-top: 18px;
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+}
+
+.category-title {
+  margin: 0 0 10px;
+  font-size: 1rem;
+  color: var(--accent);
+}
+
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.check-row:last-child {
+  border-bottom: none;
+}
+
+.check-row input[type="checkbox"] {
+  width: auto;
+  transform: scale(1.2);
+}
+
+.checked {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+
+.pill {
+  display: inline-block;
+  font-size: 0.75rem;
+  padding: 4px 8px;
+  background: #dbeafe;
+  color: #1d4ed8;
+  border-radius: 999px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 8px;
+  margin-bottom: 10px;
+}
+
+.summary-box {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
+  padding: 10px 12px;
+  min-width: 120px;
+}
+
+.summary-box strong {
+  display: block;
+  font-size: 1.1rem;
+}
+
+.empty {
+  padding: 16px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  color: var(--muted);
+  background: #fcfdff;
+  text-align: center;
+}
+
+@media (max-width: 900px) {
+  .grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 640px) {
+  .controls { grid-template-columns: 1fr; }
+  .button-row { flex-direction: column; }
+  .button-row button { width: 100%; }
+  .hero h1 { font-size: 1.6rem; }
+}
+
+  </style>
+</head>
+<body>
+  <div class="app">
+    <section class="hero">
+      <h1>Household Grocery List</h1>
+      <p>
+        Anyone in the house can add groceries. The app saves everything in the browser,
+        combines duplicate items, sorts the shopping list by category, and lets the shopper
+        check items off as they go.
+      </p>
+    </section><div class="grid">
+  <section class="card">
+    <h2>Add Grocery Item</h2>
+    <div class="controls">
+      <div>
+        <label for="person">Household Member</label>
+        <input id="person" type="text" placeholder="Example: Joe" />
+      </div>
+      <div>
+        <label for="itemName">Item</label>
+        <input id="itemName" type="text" placeholder="Example: milk" />
+      </div>
+      <div>
+        <label for="quantity">Quantity</label>
+        <input id="quantity" type="text" placeholder="Example: 2 gallons" />
+      </div>
+      <div>
+        <label for="category">Category / Aisle</label>
+        <select id="category">
+          <option value="Produce">Produce</option>
+          <option value="Meat">Meat</option>
+          <option value="Dairy">Dairy</option>
+          <option value="Frozen">Frozen</option>
+          <option value="Bakery">Bakery</option>
+          <option value="Pantry">Pantry</option>
+          <option value="Snacks">Snacks</option>
+          <option value="Beverages">Beverages</option>
+          <option value="Household">Household</option>
+          <option value="Health & Beauty">Health & Beauty</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="button-row">
+      <button id="addBtn">Save Item</button>
+      <button id="clearCheckedBtn" class="secondary">Remove Checked Items</button>
+      <button id="resetBtn" class="danger">Clear All Saved Items</button>
+    </div>
+
+    <p class="muted">
+      Tip: If two people add the same item, it will show once on the shopping list with both names attached.
+    </p>
+  </section>
+
+  <section class="card">
+    <h2>Saved Requests</h2>
+    <div class="summary" id="summary"></div>
+    <div id="savedItems" class="list"></div>
+  </section>
+</div>
+
+<section class="card" style="margin-top: 20px;">
+  <h2>Shopping List</h2>
+  <p class="muted">Sorted by category so the shopper can move through the store more efficiently.</p>
+  <div id="shoppingList"></div>
+</section>
+
+  </div>  <script>
+    const STORAGE_KEY = 'householdGroceryList_v1';
+
+    const personInput = document.getElementById('person');
+    const itemNameInput = document.getElementById('itemName');
+    const quantityInput = document.getElementById('quantity');
+    const categoryInput = document.getElementById('category');
+    const addBtn = document.getElementById('addBtn');
+    const clearCheckedBtn = document.getElementById('clearCheckedBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const savedItemsEl = document.getElementById('savedItems');
+    const shoppingListEl = document.getElementById('shoppingList');
+    const summaryEl = document.getElementById('summary');
+
+    function getItems() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+      } catch {
+        return [];
+      }
+    }
+
+    function saveItems(items) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    }
+
+    function normalize(text) {
+      return text.trim().toLowerCase();
+    }
+
+    function addItem() {
+      const person = personInput.value.trim();
+      const itemName = itemNameInput.value.trim();
+      const quantity = quantityInput.value.trim() || '1';
+      const category = categoryInput.value;
+
+      if (!person || !itemName) {
+        alert('Please enter both a household member and an item.');
+        return;
+      }
+
+      const items = getItems();
+      items.push({
+        id: crypto.randomUUID(),
+        person,
+        itemName,
+        quantity,
+        category,
+        checked: false,
+        createdAt: new Date().toISOString()
+      });
+
+      saveItems(items);
+      itemNameInput.value = '';
+      quantityInput.value = '';
+      itemNameInput.focus();
+      render();
+    }
+
+    function deleteItem(id) {
+      const items = getItems().filter(item => item.id !== id);
+      saveItems(items);
+      render();
+    }
+
+    function toggleMergedItem(itemName, category, checked) {
+      const items = getItems().map(item => {
+        if (normalize(item.itemName) === normalize(itemName) && item.category === category) {
+          return { ...item, checked };
+        }
+        return item;
+      });
+      saveItems(items);
+      render();
+    }
+
+    function clearCheckedItems() {
+      const items = getItems().filter(item => !item.checked);
+      saveItems(items);
+      render();
+    }
+
+    function resetAll() {
+      if (!confirm('Clear the entire saved grocery list?')) return;
+      localStorage.removeItem(STORAGE_KEY);
+      render();
+    }
+
+    function buildMergedList(items) {
+      const map = new Map();
+
+      for (const item of items) {
+        const key = `${normalize(item.itemName)}__${item.category}`;
+
+        if (!map.has(key)) {
+          map.set(key, {
+            itemName: item.itemName,
+            category: item.category,
+            quantities: [],
+            people: [],
+            checked: item.checked
+          });
+        }
+
+        const entry = map.get(key);
+        entry.quantities.push(item.quantity);
+        entry.people.push(item.person);
+        entry.checked = entry.checked || item.checked;
+      }
+
+      return Array.from(map.values())
+        .map(entry => ({
+          ...entry,
+          people: [...new Set(entry.people)].sort(),
+          quantities: entry.quantities.filter(Boolean)
+        }))
+        .sort((a, b) => {
+          if (a.category !== b.category) return a.category.localeCompare(b.category);
+          return a.itemName.localeCompare(b.itemName);
+        });
+    }
+
+    function renderSummary(items, merged) {
+      const members = new Set(items.map(i => i.person.trim()).filter(Boolean));
+      const checkedCount = merged.filter(i => i.checked).length;
+
+      summaryEl.innerHTML = `
+        <div class="summary-box"><strong>${items.length}</strong><span>Saved entries</span></div>
+        <div class="summary-box"><strong>${merged.length}</strong><span>Shopping items</span></div>
+        <div class="summary-box"><strong>${members.size}</strong><span>Household users</span></div>
+        <div class="summary-box"><strong>${checkedCount}</strong><span>Checked off</span></div>
+      `;
+    }
+
+    function renderSavedItems(items) {
+      if (!items.length) {
+        savedItemsEl.innerHTML = '<div class="empty">No saved grocery requests yet.</div>';
+        return;
+      }
+
+      const sorted = [...items].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+      savedItemsEl.innerHTML = sorted.map(item => `
+        <div class="item">
+          <div class="item-left">
+            <div class="item-name">${escapeHtml(item.itemName)}</div>
+            <div class="item-meta">
+              ${escapeHtml(item.quantity)} • ${escapeHtml(item.category)} • added by ${escapeHtml(item.person)}
+            </div>
+          </div>
+          <button class="danger" style="width:auto; padding:8px 12px;" onclick="deleteItem('${item.id}')">Delete</button>
+        </div>
+      `).join('');
+    }
+
+    function renderShoppingList(merged) {
+      if (!merged.length) {
+        shoppingListEl.innerHTML = '<div class="empty">Your shopping list will appear here.</div>';
+        return;
+      }
+
+      const grouped = merged.reduce((acc, item) => {
+        if (!acc[item.category]) acc[item.category] = [];
+        acc[item.category].push(item);
+        return acc;
+      }, {});
+
+      shoppingListEl.innerHTML = Object.keys(grouped).sort().map(category => `
+        <div class="category-block">
+          <h3 class="category-title">${escapeHtml(category)}</h3>
+          ${grouped[category].map(item => `
+            <label class="check-row">
+              <input
+                type="checkbox"
+                ${item.checked ? 'checked' : ''}
+                onchange="toggleMergedItem(${JSON.stringify(item.itemName)}, ${JSON.stringify(item.category)}, this.checked)"
+              />
+              <div>
+                <div class="${item.checked ? 'checked' : ''}">
+                  <strong>${escapeHtml(item.itemName)}</strong>
+                  ${item.quantities.length ? `<span class="pill">${escapeHtml(item.quantities.join(' + '))}</span>` : ''}
+                </div>
+                <div class="item-meta">Requested by: ${escapeHtml(item.people.join(', '))}</div>
+              </div>
+            </label>
+          `).join('')}
+        </div>
+      `).join('');
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function render() {
+      const items = getItems();
+      const merged = buildMergedList(items);
+      renderSummary(items, merged);
+      renderSavedItems(items);
+      renderShoppingList(merged);
+    }
+
+    addBtn.addEventListener('click', addItem);
+    clearCheckedBtn.addEventListener('click', clearCheckedItems);
+    resetBtn.addEventListener('click', resetAll);
+
+    [personInput, itemNameInput, quantityInput].forEach(input => {
+      input.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') addItem();
+      });
+    });
+
+    render();
+
+    window.deleteItem = deleteItem;
+    window.toggleMergedItem = toggleMergedItem;
+  </script></body>
+</html>
