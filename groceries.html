@@ -54,6 +54,42 @@
       line-height: 1.5;
     }
 
+    .status-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      background: #f0fdf4;
+      border: 1px solid #86efac;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-size: 0.9rem;
+    }
+
+    .status-bar.error {
+      background: #fef2f2;
+      border-color: #fca5a5;
+      color: #991b1b;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #16a34a;
+      animation: pulse 2s infinite;
+    }
+
+    .status-bar.error .status-dot {
+      background: #dc2626;
+      animation: none;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
     .grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -130,6 +166,11 @@
 
     button.danger:hover {
       background: #b91c1c;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
 
     .button-row {
@@ -262,6 +303,44 @@
       text-align: center;
     }
 
+    .setup-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .setup-modal.show {
+      display: flex;
+    }
+
+    .setup-modal-content {
+      background: white;
+      padding: 40px;
+      border-radius: 16px;
+      max-width: 500px;
+      width: 90%;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .setup-modal-content h2 {
+      margin-top: 0;
+    }
+
+    .setup-modal-content input {
+      margin-bottom: 16px;
+    }
+
+    .setup-modal-content button {
+      width: 100%;
+    }
+
     @media (max-width: 900px) {
       .grid { grid-template-columns: 1fr; }
     }
@@ -279,11 +358,15 @@
     <section class="hero">
       <h1>Household Grocery List</h1>
       <p>
-        Anyone in the house can add groceries. The app saves everything in the browser,
-        combines duplicate items, sorts the shopping list by category, and lets the shopper
-        check items off as they go.
+        Anyone in the house can add groceries. The app saves everything to the cloud,
+        combines duplicate items, sorts the shopping list by category, and syncs across all your devices!
       </p>
     </section>
+
+    <div class="status-bar" id="statusBar">
+      <div class="status-dot"></div>
+      <span id="statusText">Connecting to cloud...</span>
+    </div>
 
     <div class="grid">
       <section class="card">
@@ -344,8 +427,34 @@
     </section>
   </div>
 
+  <div class="setup-modal" id="setupModal">
+    <div class="setup-modal-content">
+      <h2>Cloud Setup Required</h2>
+      <p>To enable multi-device syncing, you need to set up Firebase. It's free and takes 2 minutes!</p>
+      <p><strong>Your Project ID (from Firebase Console):</strong></p>
+      <input type="text" id="firebaseProjectId" placeholder="your-project-id" />
+      <p><strong>Your Web API Key (from Firebase Console):</strong></p>
+      <input type="text" id="firebaseApiKey" placeholder="your-api-key" />
+      <button onclick="setupFirebase()">Connect to Cloud</button>
+      <p class="muted" style="margin-top: 16px;">
+        <strong>Don't have Firebase set up?</strong> 
+        <a href="https://console.firebase.google.com" target="_blank">Create a free project here</a>
+        (takes ~2 minutes)
+      </p>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js"></script>
+
   <script>
     const STORAGE_KEY = 'householdGroceryList_v1';
+    const FIREBASE_CONFIG_KEY = 'firebaseConfig_v1';
+
+    let db = null;
+    let isOnline = false;
+    let firebaseReady = false;
 
     const personInput = document.getElementById('person');
     const itemNameInput = document.getElementById('itemName');
@@ -357,6 +466,80 @@
     const savedItemsEl = document.getElementById('savedItems');
     const shoppingListEl = document.getElementById('shoppingList');
     const summaryEl = document.getElementById('summary');
+    const statusBar = document.getElementById('statusBar');
+    const statusText = document.getElementById('statusText');
+    const setupModal = document.getElementById('setupModal');
+
+    // Initialize Firebase if config exists
+    async function initializeFirebase() {
+      const configStr = localStorage.getItem(FIREBASE_CONFIG_KEY);
+      if (configStr) {
+        try {
+          const config = JSON.parse(configStr);
+          firebase.initializeApp(config);
+          db = firebase.database();
+          firebaseReady = true;
+          setupRealtimeListener();
+          updateStatus(true, 'Connected to cloud');
+        } catch (error) {
+          console.error('Firebase init error:', error);
+          updateStatus(false, 'Cloud connection failed. Using local storage.');
+        }
+      } else {
+        setupModal.classList.add('show');
+      }
+    }
+
+    function setupFirebase() {
+      const projectId = document.getElementById('firebaseProjectId').value.trim();
+      const apiKey = document.getElementById('firebaseApiKey').value.trim();
+
+      if (!projectId || !apiKey) {
+        alert('Please enter both Project ID and API Key');
+        return;
+      }
+
+      const config = {
+        apiKey: apiKey,
+        authDomain: `${projectId}.firebaseapp.com`,
+        databaseURL: `https://${projectId}-default-rtdb.firebaseio.com`,
+        projectId: projectId,
+        storageBucket: `${projectId}.appspot.com`,
+      };
+
+      localStorage.setItem(FIREBASE_CONFIG_KEY, JSON.stringify(config));
+      setupModal.classList.remove('show');
+      location.reload();
+    }
+
+    function setupRealtimeListener() {
+      if (!db) return;
+
+      db.ref('items').on('value', (snapshot) => {
+        const remoteItems = snapshot.val() || {};
+        // Convert object to array
+        const itemsArray = Object.keys(remoteItems).map(key => ({
+          ...remoteItems[key],
+          id: key
+        }));
+        // Save to local storage as backup
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(itemsArray));
+        render();
+      }, (error) => {
+        console.error('Database error:', error);
+        updateStatus(false, 'Cloud sync error. Using local data.');
+      });
+    }
+
+    function updateStatus(online, message) {
+      isOnline = online;
+      statusText.textContent = message;
+      if (online) {
+        statusBar.classList.remove('error');
+      } else {
+        statusBar.classList.add('error');
+      }
+    }
 
     function getItems() {
       try {
@@ -368,6 +551,17 @@
 
     function saveItems(items) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+      
+      if (firebaseReady && db) {
+        const itemsObj = {};
+        items.forEach(item => {
+          itemsObj[item.id] = item;
+        });
+        db.ref('items').set(itemsObj).catch(error => {
+          console.error('Save error:', error);
+          updateStatus(false, 'Could not sync to cloud. Local save only.');
+        });
+      }
     }
 
     function normalize(text) {
@@ -400,13 +594,11 @@
       itemNameInput.value = '';
       quantityInput.value = '';
       itemNameInput.focus();
-      render();
     }
 
     function deleteItem(id) {
       const items = getItems().filter(item => item.id !== id);
       saveItems(items);
-      render();
     }
 
     function toggleMergedItem(itemName, category, checked) {
@@ -417,19 +609,16 @@
         return item;
       });
       saveItems(items);
-      render();
     }
 
     function clearCheckedItems() {
       const items = getItems().filter(item => !item.checked);
       saveItems(items);
-      render();
     }
 
     function resetAll() {
       if (!confirm('Clear the entire saved grocery list?')) return;
-      localStorage.removeItem(STORAGE_KEY);
-      render();
+      saveItems([]);
     }
 
     function buildMergedList(items) {
@@ -551,6 +740,7 @@
       renderShoppingList(merged);
     }
 
+    // Event listeners
     addBtn.addEventListener('click', addItem);
     clearCheckedBtn.addEventListener('click', clearCheckedItems);
     resetBtn.addEventListener('click', resetAll);
@@ -561,10 +751,14 @@
       });
     });
 
-    render();
-
+    // Make functions global for HTML onclick handlers
     window.deleteItem = deleteItem;
     window.toggleMergedItem = toggleMergedItem;
+    window.setupFirebase = setupFirebase;
+
+    // Initialize
+    render();
+    initializeFirebase();
   </script>
 </body>
 </html>
